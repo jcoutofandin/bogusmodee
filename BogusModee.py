@@ -100,6 +100,24 @@ class JobDb:
 # functions
 ################################################################################
 
+def cal_shift_list(len_list=0, offset=0, i_beg=0, i_end=0, direction=''):
+    if len_list != 0 and offset != 0:
+        if direction == 'B':
+            i_beg -=offset
+            if i_beg < 0:
+                i_beg = 0
+            i_end = i_beg + offset
+            if i_end > len_list:
+                i_end = len_list
+        elif direction == 'F':
+            i_beg = i_end
+            i_end = i_beg + offset
+            if i_end > len_list:
+                i_beg = len_list - offset
+                i_end = len_list
+
+    return i_beg, i_end
+
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
 
@@ -125,6 +143,27 @@ def display_my_ranking_for_a_game(job):
     title  = ''
     rank = 0
 
+    #sql = "SELECT game_id, title FROM game order by game_id"
+    #sql = "SELECT g.game_id, g.title FROM game g, score s WHERE g.game_id = s.game_id AND s.login_id = '%s' ORDER BY g.game_id" % (job.login_id)
+    sql = "SELECT g.game_id, g.title, s.score FROM game g, score s WHERE g.game_id = s.game_id AND s.login_id = '%s' ORDER BY g.game_id" % (job.login_id)
+    results = job.SQL_fetch_all(sql)
+
+    len_results = len(results)
+    offset = 8
+    i_beg = 0
+
+    if offset > len_results:
+        offset = len_results
+
+    i_end = i_beg + offset
+
+    '''
+    print('results ->', results)
+    print('results [0][0] ->', results[0][0])
+    print('results [0][1] ->', results[0][1])
+    print('results [0][2] ->', results[0][2])
+    '''
+
     while flag_redisplay and cpt < 3:
         menu_header(job)
 
@@ -137,27 +176,43 @@ def display_my_ranking_for_a_game(job):
         print (' ' * 5 + '                -- ------- --- - ----\n\n')
         print (' ' * 5 + '| Game_id |            Title             |     Score     |')
         print (' ' * 5 + ' --------- ------------------------------ --------------- ')
-        #sql = "SELECT game_id, title FROM game order by game_id"
-        #sql = "SELECT g.game_id, g.title FROM game g, score s WHERE g.game_id = s.game_id AND s.login_id = '%s' ORDER BY g.game_id" % (job.login_id)
-        sql = "SELECT g.game_id, g.title, s.score FROM game g, score s WHERE g.game_id = s.game_id AND s.login_id = '%s' ORDER BY g.game_id" % (job.login_id)
-        results = job.SQL_fetch_all(sql)
 
-        #print('results ->', results)
         if results == ():
             print(' ' * 5 + ' No game')
         else:
-            for row in results:
-                r_game_id = row[0]
-                r_title = row[1]
-                r_score = row[2]
+            for i in range (i_beg, i_end):
+                r_game_id = results[i][0]
+                r_title = results[i][1]
+                r_score = results[i][2]
                 # Now print fetched resul
                 #print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|')
                 print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|' + str(int(r_score)).center(15) + '|')
 
-            print('\n\n\n')
+            print('\n')
+            print(' ' * 5 + '(B)ackward <<< List >>> (F)orward'+ ' ' * 15 + '(' + str(i_end) + '/' + str(len_results) + ') Row(s)')
+            print('\n\n')
+
             if game_id == '':
                 try:
-                    game_id = int(input(' ' * 5 + ' Game_id : '))
+                    #game_id = int(input(' ' * 5 + ' Game_id : '))
+                    game_id = input(' ' * 5 + ' Game_id : ')
+                    if not game_id.isdigit():
+                        if game_id.capitalize().find('B') != -1:
+                            i_beg, i_end = cal_shift_list(len_list=len_results, offset=offset, i_beg=i_beg, i_end=i_end, direction='B')
+                            game_id = ''
+                            continue
+                        elif game_id.capitalize().find('F') != -1:
+                            i_beg, i_end = cal_shift_list(len_list=len_results, offset=offset, i_beg=i_beg, i_end=i_end, direction='F')
+                            game_id = ''
+                            continue
+                        else:
+                            print(' ' * 6 + 'Game_id invalid ! You must enter an integer value.')
+                            time.sleep(1)
+                            game_id = ''
+                            cpt += 1
+                            continue
+                    else:
+                        game_id = int(game_id)
                 except ValueError:
                     print(' ' * 6 + 'Game_id invalid ! You must enter an integer value.')
                     time.sleep(1)
@@ -212,6 +267,10 @@ def display_my_ranking_for_a_game(job):
         rep = input(' ' * 5 + 'Choice ==> ').capitalize()
         if rep == '':
             game_id = ''
+        elif rep == 'B':
+            i_beg, i_end = cal_shift_list(len_list=len_results, offset=offset, i_beg=i_beg, i_end=i_end, direction='B')
+        elif rep == 'F':
+            i_beg, i_end = cal_shift_list(len_list=len_results, offset=offset, i_beg=i_beg, i_end=i_end, direction='F')
         elif rep == 'R':
             flag_redisplay = False
 
@@ -279,16 +338,13 @@ def display_Provide_my_score_of_my_game(job):
     game_id = ''
     title  = ''
     score = 0
+    results_list = []
+    offset = 8
+    i_beg = 0
 
     while flag_redisplay and cpt < 3:
         menu_header(job)
 
-        '''
-        print (' ' * 5 + '          Provide my score of my game')
-        print (' ' * 5 + '          ------- -- ----- -- -- ----\n\n')
-        print (' ' * 5 + '| Game_id |            Title             |')
-        print (' ' * 5 + ' --------- ------------------------------')
-        '''
         print (' ' * 5 + '              Provide my score of my game')
         print (' ' * 5 + '              ------- -- ----- -- -- ----\n\n')
         print (' ' * 5 + '| Game_id |            Title             |     Score     |')
@@ -298,7 +354,16 @@ def display_Provide_my_score_of_my_game(job):
         sql = "SELECT game_id, title FROM game ORDER BY game_id"
         results = job.SQL_fetch_all(sql)
 
+        results_list = []
         for row in results:
+            results_list.append(list(row))
+
+        len_results_list = len(results_list)
+
+        if offset > len_results_list:
+            offset = len_results_list
+
+        for row in results_list:
             r_game_id = row[0]
             r_title = row[1]
 
@@ -312,111 +377,146 @@ def display_Provide_my_score_of_my_game(job):
             else:
                 r_score = data[0]
 
-            # Now print fetched resul
-            if r_score == 'Unknow':
-                print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|' + ' '.center(15) + '|')
-            else:
-                print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|' + str(int(r_score)).center(15) + '|')
+            # add r_score to row of results_list
+            row.append(r_score)
 
-        print('\n\n\n')
-
-        if game_id == '':
-            try:
-                game_id = int(input(' ' * 5 + ' Game_id : '))
-            except ValueError:
-                print(' ' * 6 + 'Game_id invalid ! You must enter an integer value.')
-                time.sleep(1)
-                game_id = ''
-                cpt += 1
-                continue
-            except Exception as error:
-                print (' ' * 6 + 'Game_id invalid !')
-                print('ERROR', error)
-                time.sleep(1)
-                game_id = ''
-                cpt += 1
-                continue
-
-            sql = "SELECT game_id, title FROM game WHERE game_id = '%d'" % (game_id)
-            data = job.SQL_fetch_one(sql)
-            if data == None:
-                print (' ' * 6 + 'Game_id invalid !')
-                time.sleep(1)
-                game_id = ''
-                cpt += 1
-                continue
-            
-            cpt = 0
-            game_id = data[0]
+        if results == ():
+            print(' ' * 5 + ' No game')
         else:
-            print(' ' * 5 + ' Game_id : %s' % (game_id))
+            i_end = i_beg + offset
 
-        if score == 0:
-            try:
-                score = int(input(' ' * 5 + ' Score   : '))
-                if score <= 0:
-                    print(' ' * 6 + 'Score invalid ! It must be superior to 0.')
+            for i in range (i_beg, i_end):
+                r_game_id = results_list[i][0]
+                r_title = results_list[i][1]
+                r_score = results_list[i][2]
+                # Now print fetched resul
+                #print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|')
+                #print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|' + str(int(r_score)).center(15) + '|')
+                # Now print fetched resul
+                if r_score == 'Unknow':
+                    print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|' + ' '.center(15) + '|')
+                else:
+                    print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|' + str(int(r_score)).center(15) + '|')
+
+            print('\n')
+            print(' ' * 5 + '(B)ackward <<< List >>> (F)orward'+ ' ' * 15 + '(' + str(i_end) + '/' + str(len_results_list) + ') Row(s)')
+            print('\n\n')
+
+            if game_id == '':
+                try:
+                    #game_id = int(input(' ' * 5 + ' Game_id : '))
+                    game_id = input(' ' * 5 + ' Game_id : ')
+                    if not game_id.isdigit():
+                        if game_id.capitalize().find('B') != -1:
+                            i_beg, i_end = cal_shift_list(len_list=len_results_list, offset=offset, i_beg=i_beg, i_end=i_end, direction='B')
+                            game_id = ''
+                            continue
+                        elif game_id.capitalize().find('F') != -1:
+                            i_beg, i_end = cal_shift_list(len_list=len_results_list, offset=offset, i_beg=i_beg, i_end=i_end, direction='F')
+                            game_id = ''
+                            continue
+                        else:
+                            print(' ' * 6 + 'Game_id invalid ! You must enter an integer value.')
+                            time.sleep(1)
+                            game_id = ''
+                            cpt += 1
+                            continue
+                    else:
+                        game_id = int(game_id)
+                except ValueError:
+                    print(' ' * 6 + 'Game_id invalid ! You must enter an integer value.')
+                    time.sleep(1)
+                    game_id = ''
+                    cpt += 1
+                    continue
+                except Exception as error:
+                    print (' ' * 6 + 'Game_id invalid !')
+                    print('ERROR', error)
+                    time.sleep(1)
+                    game_id = ''
+                    cpt += 1
+                    continue
+
+                sql = "SELECT game_id, title FROM game WHERE game_id = '%d'" % (game_id)
+                data = job.SQL_fetch_one(sql)
+                if data == None:
+                    print (' ' * 6 + 'Game_id invalid !')
+                    time.sleep(1)
+                    game_id = ''
+                    cpt += 1
+                    continue
+                
+                cpt = 0
+                game_id = data[0]
+            else:
+                print(' ' * 5 + ' Game_id : %s' % (game_id))
+
+            if score == 0:
+                try:
+                    score = int(input(' ' * 5 + ' Score   : '))
+                    if score <= 0:
+                        print(' ' * 6 + 'Score invalid ! It must be superior to 0.')
+                        time.sleep(1)
+                        score = 0
+                        cpt += 1
+                        continue
+                    elif score > 1000000:
+                        print(' ' * 6 + 'Score invalid ! It must be inferior to 1000000.')
+                        time.sleep(1)
+                        score = 0
+                        cpt += 1
+                        continue
+                except ValueError:
+                    print(' ' * 6 + 'score invalid ! You must enter an integer value.')
                     time.sleep(1)
                     score = 0
                     cpt += 1
                     continue
-                elif score > 1000000:
-                    print(' ' * 6 + 'Score invalid ! It must be inferior to 1000000.')
+                except Exception as error:
+                    print (' ' * 6 + 'Score invalid !')
+                    print('ERROR', error)
                     time.sleep(1)
                     score = 0
                     cpt += 1
                     continue
-            except ValueError:
-                print(' ' * 6 + 'score invalid ! You must enter an integer value.')
-                time.sleep(1)
-                score = 0
-                cpt += 1
-                continue
-            except Exception as error:
-                print (' ' * 6 + 'Score invalid !')
-                print('ERROR', error)
-                time.sleep(1)
-                score = 0
-                cpt += 1
-                continue
 
-            cpt = 0
-        else:
-            print(' ' * 5 + ' Score   : %d' % (score))
-
-        if flag_maj == False:
-            flag_maj = True
-            #print (' ' * 5 + '|' + str(game_id).center(9) + '|' + job.login_name.center(30) + '|')
-            sql = "SELECT score FROM score WHERE login_id = '%d' AND game_id = '%d'" % (job.login_id, game_id)
-            data = job.SQL_fetch_one(sql)
-            if data == None:
-                sql = "INSERT INTO score (login_id, game_id, score, created_at) \
-                        VALUES ('%d', '%d', '%d', NOW())" % \
-                        (job.login_id, game_id, score)
-                ret = job.SQL_execute(sql)
-                if ret == False:
-                    #print (' ' * 6 + 'Error Insertion !')
-                    message_maj = 'Error Insertion !'
-                else:
-                    #print (' ' * 6 + 'Successful Insertion !')
-                    message_maj = 'Successful Insertion !'
+                cpt = 0
             else:
-                sql = "UPDATE score SET score = '%d', created_at = NOW() \
-                        WHERE login_id = '%d' AND game_id = '%d'" % \
-                        (score, job.login_id, game_id)
-                ret = job.SQL_execute(sql)
-                if ret == False:
-                    #print (' ' * 6 + 'Error Update !')
-                    message_maj = 'Error Update !'
-                else:
-                    #print (' ' * 6 + 'Successful Update !')
-                    message_maj = 'Successful Update !'
+                print(' ' * 5 + ' Score   : %d' % (score))
 
-            print(' ' * 6 + '%s' % (message_maj))
-            time.sleep(1)
-            continue
-        else:
-            print(' ' * 6 + '%s' % (message_maj))
+            if flag_maj == False:
+                flag_maj = True
+                #print (' ' * 5 + '|' + str(game_id).center(9) + '|' + job.login_name.center(30) + '|')
+                sql = "SELECT score FROM score WHERE login_id = '%d' AND game_id = '%d'" % (job.login_id, game_id)
+                data = job.SQL_fetch_one(sql)
+                if data == None:
+                    sql = "INSERT INTO score (login_id, game_id, score, created_at) \
+                            VALUES ('%d', '%d', '%d', NOW())" % \
+                            (job.login_id, game_id, score)
+                    ret = job.SQL_execute(sql)
+                    if ret == False:
+                        #print (' ' * 6 + 'Error Insertion !')
+                        message_maj = 'Error Insertion !'
+                    else:
+                        #print (' ' * 6 + 'Successful Insertion !')
+                        message_maj = 'Successful Insertion !'
+                else:
+                    sql = "UPDATE score SET score = '%d', created_at = NOW() \
+                            WHERE login_id = '%d' AND game_id = '%d'" % \
+                            (score, job.login_id, game_id)
+                    ret = job.SQL_execute(sql)
+                    if ret == False:
+                        #print (' ' * 6 + 'Error Update !')
+                        message_maj = 'Error Update !'
+                    else:
+                        #print (' ' * 6 + 'Successful Update !')
+                        message_maj = 'Successful Update !'
+
+                print(' ' * 6 + '%s' % (message_maj))
+                time.sleep(1)
+                continue
+            else:
+                print(' ' * 6 + '%s' % (message_maj))
 
         print('\n\n\n')
 
@@ -430,6 +530,10 @@ def display_Provide_my_score_of_my_game(job):
             score = 0
             flag_maj = False
             message_maj = ''
+        elif rep == 'B':
+            i_beg, i_end = cal_shift_list(len_list=len_results_list, offset=offset, i_beg=i_beg, i_end=i_end, direction='B')
+        elif rep == 'F':
+            i_beg, i_end = cal_shift_list(len_list=len_results_list, offset=offset, i_beg=i_beg, i_end=i_end, direction='F')
         elif rep == 'R':
             flag_redisplay = False
 
@@ -536,7 +640,8 @@ def menu_init(job):
 ################################################################################
 
 def main():
-    job = JobDb(host="bogus-mysql",user="cse",password="cseMysql1!",database="BogusModee")
+    #job = JobDb(host="localhost",user="cse",password="cseMysql1!",database="BogusModee")
+    job = JobDb(host="mysqlhost",user="bogusmodee",password="BogusModee1!",database="BogusModee")
     job.open_db()
     menu_init(job)
     #job.display_version()
