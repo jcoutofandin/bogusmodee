@@ -189,7 +189,7 @@ def display_my_ranking_for_a_game(job):
                 print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|' + str(int(r_score)).center(15) + '|')
 
             print('\n')
-            print(' ' * 5 + '(B)ackward <<< List >>> (F)orward'+ ' ' * 15 + '(' + str(i_end) + '/' + str(len_results) + ') Row(s)')
+            print(' ' * 5 + '(B)ackward <<< List >>> (F)orward'+ ' ' * 12 + '(' + str(i_end) + '/' + str(len_results) + ') Row(s)')
             print('\n\n')
 
             if game_id == '':
@@ -247,7 +247,7 @@ def display_my_ranking_for_a_game(job):
             sql = "SELECT COUNT(*) FROM score WHERE game_id = '%d' AND login_id = '%s'"  % (game_id, job.login_id)
             data = job.SQL_fetch_one(sql)
             if data[0] == 0:
-                print('\n\n')
+                print('\n')
                 print (' ' * 6 + 'Unranked for game "' + title+ '"')
             else:
                 sql = "SELECT COUNT(*) FROM score WHERE game_id = '%d' AND score > (SELECT score FROM score WHERE game_id = '%d' AND login_id = '%s')" % (game_id, game_id, job.login_id)
@@ -255,10 +255,10 @@ def display_my_ranking_for_a_game(job):
                 data = job.SQL_fetch_one(sql)
                 rank = data[0]
                 rank += 1
-                print('\n\n')
+                print('\n')
                 print (' ' * 6 + 'My ranking for game "' + title + '" is :', rank)
 
-        print('\n\n\n')
+        print('\n\n')
 
         print(' ' * 5 + 'ENTER ==> New search')
         print(' ' * 5 + 'R     ==> RETURN')
@@ -345,8 +345,8 @@ def display_Provide_my_score_of_my_game(job):
     while flag_redisplay and cpt < 3:
         menu_header(job)
 
-        print (' ' * 5 + '              Provide my score of my game')
-        print (' ' * 5 + '              ------- -- ----- -- -- ----\n\n')
+        print (' ' * 5 + '            Provide the score of my game')
+        print (' ' * 5 + '            ------- --- ----- -- -- ----\n\n')
         print (' ' * 5 + '| Game_id |            Title             |     Score     |')
         print (' ' * 5 + ' --------- ------------------------------ --------------- ')
 
@@ -399,7 +399,7 @@ def display_Provide_my_score_of_my_game(job):
                     print (' ' * 5 + '|' + str(r_game_id).center(9) + '|' + r_title.center(30) + '|' + str(int(r_score)).center(15) + '|')
 
             print('\n')
-            print(' ' * 5 + '(B)ackward <<< List >>> (F)orward'+ ' ' * 15 + '(' + str(i_end) + '/' + str(len_results_list) + ') Row(s)')
+            print(' ' * 5 + '(B)ackward <<< List >>> (F)orward'+ ' ' * 12 + '(' + str(i_end) + '/' + str(len_results_list) + ') Row(s)')
             print('\n\n')
 
             if game_id == '':
@@ -513,12 +513,12 @@ def display_Provide_my_score_of_my_game(job):
                         message_maj = 'Successful Update !'
 
                 print(' ' * 6 + '%s' % (message_maj))
-                time.sleep(1)
+                #time.sleep(1)
                 continue
             else:
                 print(' ' * 6 + '%s' % (message_maj))
 
-        print('\n\n\n')
+        print('\n\n')
 
         print(' ' * 5 + 'ENTER ==> New Update')
         print(' ' * 5 + 'R     ==> RETURN')
@@ -547,7 +547,7 @@ def menu_main(job):
         menu_header(job)
         print(' ' * 5 + '1 ==> My ranking for a game')
         print(' ' * 5 + '2 ==> Top 5 rankings of all games')
-        print(' ' * 5 + '3 ==> Provide my score of my game')
+        print(' ' * 5 + '3 ==> Provide the score of my game')
         print(' ' * 5 + 'R ==> RETURN')
         print(' ' * 5 + 'Q ==> QUIT')
         print('\n')
