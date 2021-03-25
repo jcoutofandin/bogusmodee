@@ -101,6 +101,25 @@ class JobDb:
 # functions
 ################################################################################
 
+def cancel_entry():
+    c_rep = ''
+    c_ret = ''
+    c_cpt = 0
+    c_flag_redisplay = True
+    c_return=()
+
+    print('\n')
+    print(' ' * 5 + 'Y/N ==> Cancel entries and return to the previous screen?') 
+    print('\n')
+
+    c_rep = input(' ' * 5 + 'Choice ==> ').capitalize()
+    if c_rep == 'Y':
+        c_flag_redisplay = False
+
+    c_return=(c_ret, c_cpt, c_flag_redisplay)
+
+    return c_return
+
 def validate(date_text, date_format='%Y-%m-%d', date_display='YYYY-MM-DD'):
     try:
         datetime.datetime.strptime(date_text, date_format)
@@ -110,6 +129,31 @@ def validate(date_text, date_format='%Y-%m-%d', date_display='YYYY-MM-DD'):
 def test_field(t_field, t_label, t_type, t_len_min=0, t_len_max=0, t_pass='N'):
     ret = True
     t_ret=()
+
+    # -- beg -- Replace '1)' with spaces
+    tmp = list(t_label)
+
+    #print('t_label ->', t_label)
+    #print('tmp     ->', tmp)
+
+    for i in range(len(tmp)):
+        #print('tmp[' + str(i) + ']->', tmp[i])
+        if tmp[i] in '0123456789 ':
+           tmp[i] = ' '
+        elif tmp[i] == ')':
+           tmp[i] = ' '
+           break
+        else:
+           # String not valid
+           tmp = list(t_label)
+           break
+        #print('tmp[' + str(i) + ']->', tmp[i])
+
+    #print('tmp     ->', tmp)
+    #print('t_label ->', t_label)
+    label = ''.join(tmp)
+    #print('label   ->', label)
+    # -- end -- Replace '1)' with spaces
 
     try:
         if t_pass == 'Y':
@@ -121,32 +165,32 @@ def test_field(t_field, t_label, t_type, t_len_min=0, t_len_max=0, t_pass='N'):
 
         if t_type == 'alpha':
             if not t_field.isalpha():
-                print(' ' * 6 + t_label + ' invalid! You must enter an alphabetical value')
+                print(' ' * 6 + label + ' invalid! You must enter an alphabetical value')
                 ret = False
 
         if t_type == 'alnum':
             if not t_field.isalnum():
-                print(' ' * 6 + t_label + ' invalid! You must enter an alphanumeric value')
+                print(' ' * 6 + label + ' invalid! You must enter an alphanumeric value')
                 ret = False
 
         if t_type == 'digit':
             if not t_field.isdigit():
-                print(' ' * 6 + t_label + ' invalid! You must enter a numeric value')
+                print(' ' * 6 + label + ' invalid! You must enter a numeric value')
                 ret = False
             else:
                 t_field = int(t_field)
 
         if t_len_max > 0 and t_type != 'digit':
             if len(t_field) < t_len_min or len(t_field) > t_len_max:
-                print(' ' * 6 + t_label + ' invalid! The number of characters must be between ' + str(t_len_min) + ' and ' + str(t_len_max))
+                print(' ' * 6 + label + ' invalid! The number of characters must be between ' + str(t_len_min) + ' and ' + str(t_len_max))
                 ret = False
 
     except ValueError:
-        print(' ' * 6 + t_label + ' invalid! Value error.')
+        print(' ' * 6 + label + ' invalid! Value error.')
         time.sleep(1)
         ret = False
     except Exception as error:
-        print(' ' * 6 + t_label + ' invalid! Exception error.')
+        print(' ' * 6 + label + ' invalid! Exception error.')
         print('ERROR', error)
         ret = False
 
@@ -222,7 +266,8 @@ def display_my_ranking_for_a_game(job):
     print('results [0][2] ->', results[0][2])
     '''
 
-    while flag_redisplay and cpt < 3:
+   #while flag_redisplay and cpt < 3:
+    while flag_redisplay:
         menu_header(job)
 
         #print(' ' * 5 + '          My ranking for a game')
@@ -251,6 +296,9 @@ def display_my_ranking_for_a_game(job):
             print('\n\n')
 
             if game_id == '':
+                if cpt == 3:
+                    ret, cpt, flag_redisplay = cancel_entry()
+                    continue
                 try:
                     #game_id = int(input(' ' * 5 + ' Game_id : '))
                     game_id = input(' ' * 5 + ' Game_id : ')
@@ -400,7 +448,8 @@ def display_Provide_my_score_of_my_game(job):
     offset = 8
     i_beg = 0
 
-    while flag_redisplay and cpt < 3:
+   #while flag_redisplay and cpt < 3:
+    while flag_redisplay:
         menu_header(job)
 
         print(' ' * 5 + '            Provide the score of my game')
@@ -461,6 +510,9 @@ def display_Provide_my_score_of_my_game(job):
             print('\n\n')
 
             if game_id == '':
+                if cpt == 3:
+                    ret, cpt, flag_redisplay = cancel_entry()
+                    continue
                 try:
                     #game_id = int(input(' ' * 5 + ' Game_id : '))
                     game_id = input(' ' * 5 + ' Game_id : ')
@@ -510,6 +562,9 @@ def display_Provide_my_score_of_my_game(job):
                 print(' ' * 5 + ' Game_id : %s' % (game_id))
 
             if score == 0:
+                if cpt == 3:
+                    ret, cpt, flag_redisplay = cancel_entry()
+                    continue
                 ret, score = test_field(t_field=score, \
                         t_label='  Score', t_type='digit', t_len_min=0, t_len_max=0, t_pass='N')  
 
@@ -620,101 +675,6 @@ def display_Provide_my_score_of_my_game(job):
 
     return ''
 
-def menu_main(job):
-
-    rep = ''
-
-    while rep not in ['Q', 'R', '1', '2', '3']:
-        menu_header(job)
-        print(' ' * 5 + '1 ==> My ranking for a game')
-        print(' ' * 5 + '2 ==> Top 5 rankings of all games')
-        print(' ' * 5 + '3 ==> Provide the score of my game')
-        print(' ' * 5 + 'R ==> RETURN')
-        print(' ' * 5 + 'Q ==> QUIT')
-        print('\n')
-
-        rep = input(' ' * 5 + 'Choice ==> ').capitalize()
-
-        if rep == '1':
-            rep = display_my_ranking_for_a_game(job)
-        elif rep == '2':
-            rep = display_top_5_ranking_of_all_games(job)
-        elif rep == '3':
-            rep = display_Provide_my_score_of_my_game(job)
-
-    return rep
-
-def menu_login(job):
-
-    flag_redisplay = True
-    cpt = 0
-    ret = False
-    job.login_name = ''
-    login_pwd  = ''
-    job.login_type = ''
-
-    while flag_redisplay and cpt < 3:
-        menu_header(job)
-
-        if job.login_name == '':
-            name = input(' ' * 5 + ' Login Name : ')
-
-            sql = "SELECT login_id, login_name, login_pwd, login_type FROM login WHERE login_name = '%s'" % (name)
-            data = job.SQL_fetch_one(sql)
-            if data == None:
-                print(' ' * 6 + 'Login Name invalid!')
-                time.sleep(1)
-                cpt += 1
-                continue
-            
-            cpt = 0
-            job.login_id = data[0]
-            job.login_name = data[1]
-            login_pwd  = data[2]
-            job.login_type = data[3]
-
-            '''
-            print("login_id : %d " % job.login_id)
-            print("login_name : %s " % job.login_name)
-            print("login_pwd : %s " % login_pwd)
-            print("login_type : %s " % job.login_type)
-            '''
-        else:
-            print(' ' * 5 + ' login Name : %s' % (job.login_name))
-
-        #pwd = input(' ' * 5 + ' password : ')
-        pwd = getpass.getpass(prompt='      Password   : ')
-
-        if pwd != login_pwd:
-            print(' ' * 6 + 'Password invalid!')
-            time.sleep(1)
-            cpt += 1
-            continue
-        else:
-            flag_redisplay = False
-            ret = True
-
-    return ret
-
-def cancel_entry():
-    c_rep = ''
-    c_ret = ''
-    c_cpt = 0
-    c_flag_redisplay = True
-    c_return=()
-
-    print('\n')
-    print(' ' * 5 + 'Y/N ==> Cancel entries and return to the previous screen?') 
-    print('\n')
-
-    c_rep = input(' ' * 5 + 'Choice ==> ').capitalize()
-    if c_rep == 'Y':
-        c_flag_redisplay = False
-
-    c_return=(c_ret, c_cpt, c_flag_redisplay)
-
-    return c_return
-
 def i_want_to_register_to_the_application(job):
 
     flag_redisplay = True
@@ -722,6 +682,7 @@ def i_want_to_register_to_the_application(job):
     flag_read_login = True
     flag_upd_gamer = True
     flag_validation = True
+    flag_field_modification = False
     cpt = 0
     #cpt_pwd_verif = 0
     ret = False
@@ -765,86 +726,50 @@ def i_want_to_register_to_the_application(job):
             continue
         '''
 
-        if flag_validation == False:
+        if flag_field_modification == True:
             if job.login_name == '' and login_pwd  == '' and login_pwd_verif == '' and first_name == '' and \
                     last_name == '' and email == '' and birthdate == '' and country == '' and town == '' and gender == '':
-                flag_validation == True
+                flag_field_modification = False
 
-        if flag_validation == False:
-            '''
-            print(' ' * 6 + '    Login Name : %s' % (job.login_name))
-            print()
-            print(' ' * 6 + '    Password   : *****')
-            print()
-            print(' ' * 6 + '    First Name : %s' % (first_name))
-            print()
-            print(' ' * 6 + '    Last Name  : %s' % (last_name))
-            print()
-            print(' ' * 6 + '    Email      : %s' % (email))
-            print()
-            print(' ' * 6 + '    Birthdate  : %s' % (birthdate))
-            print()
-            print(' ' * 6 + '    Country    : %s' % (country))
-            print()
-            print(' ' * 6 + '    Town       : %s' % (town))
-            print()
-            print(' ' * 6 + '    Gender     : %s' % (gender))
-            #
-            '''
+        if flag_field_modification == True:
             if job.login_name != '':
-                print(' ' * 6 + '    Login Name : %s' % (job.login_name))
+                print(' ' * 6 + ' 1) Login Name : %s' % (job.login_name))
             else:
-                print(' ' * 6 + '    Login Name : %s' % (old_login_name))
+                print(' ' * 6 + ' 1) Login Name : %s' % (old_login_name))
             if login_pwd  != '':
-                print()
-                print(' ' * 6 + '    Password   : *****')
+                print('\n' + ' ' * 6 + ' 2) Password   : *****')
             else:
-                print()
-                print(' ' * 6 + '    Password   :') 
+                print('\n' + ' ' * 6 + ' 2) Password   :') 
             if login_pwd_verif != '':
                 pass
             if first_name != '':
-                print()
-                print(' ' * 6 + '    First Name : %s' % (first_name))
+                print('\n' + ' ' * 6 + ' 3) First Name : %s' % (first_name))
             else:
-                print()
-                print(' ' * 6 + '    First Name : %s' % (old_first_name))
+                print('\n' + ' ' * 6 + ' 3) First Name : %s' % (old_first_name))
             if last_name != '':
-                print()
-                print(' ' * 6 + '    Last Name  : %s' % (last_name))
+                print('\n' + ' ' * 6 + ' 4) Last Name  : %s' % (last_name))
             else:
-                print()
-                print(' ' * 6 + '    Last Name  : %s' % (old_last_name))
+                print('\n' + ' ' * 6 + ' 4) Last Name  : %s' % (old_last_name))
             if email != '':
-                print()
-                print(' ' * 6 + '    Email      : %s' % (email))
+                print('\n' + ' ' * 6 + ' 5) E-mail     : %s' % (email))
             else:
-                print()
-                print(' ' * 6 + '    Email      : %s' % (old_email))
+                print('\n' + ' ' * 6 + ' 5) E-mail     : %s' % (old_email))
             if birthdate != '':
-                print()
-                print(' ' * 6 + '    Birthdate  : %s' % (birthdate))
+                print('\n' + ' ' * 6 + ' 6) Birthdate  : %s' % (birthdate))
             else:
-                print()
-                print(' ' * 6 + '    Birthdate  : %s' % (old_birthdate))
+                print('\n' + ' ' * 6 + ' 6) Birthdate  : %s' % (old_birthdate))
             if country != '':
-                print()
-                print(' ' * 6 + '    Country    : %s' % (country))
+                print('\n' + ' ' * 6 + ' 7) Country    : %s' % (country))
             else:
-                print()
-                print(' ' * 6 + '    Country    : %s' % (old_country))
+                print('\n' + ' ' * 6 + ' 7) Country    : %s' % (old_country))
             if town != '':
-                print()
-                print(' ' * 6 + '    Town       : %s' % (town))
+                print('\n' + ' ' * 6 + ' 8) Town       : %s' % (town))
             else:
-                print()
-                print(' ' * 6 + '    Town       : %s' % (old_town))
+                print('\n' + ' ' * 6 + ' 8) Town       : %s' % (old_town))
             if gender != '':
-                print()
-                print(' ' * 6 + '    Gender     : %s' % (gender))
+                print('\n' + ' ' * 6 + ' 9) Gender     : %s' % (gender))
             else:
-                print()
-                print(' ' * 6 + '    Gender     : %s' % (old_gender))
+                print('\n' + ' ' * 6 + ' 9) Gender     : %s' % (old_gender))
             print('\n' + ' ' * 6 + '    *********** Field update ***********')
 
         if job.login_name == '':
@@ -853,7 +778,7 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             ret, job.login_name = test_field(t_field=job.login_name, \
-                    t_label='    Login Name', t_type='alnum', t_len_min=3, t_len_max=20, t_pass='N')  
+                    t_label=' 1) Login Name', t_type='alnum', t_len_min=3, t_len_max=20, t_pass='N')  
 
             if ret == False:
                 time.sleep(2)
@@ -871,9 +796,11 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             cpt = 0
+            continue
         else:
-            if flag_validation == True:
-                print(' ' * 6 + '    Login Name : %s' % (job.login_name))
+            if flag_field_modification == False:
+               #print(' ' * 6 + '    Login Name : %s' % (job.login_name))
+                print(' ' * 6 + ' 1) Login Name : %s' % (job.login_name))
 
         if login_pwd  == '':
             print()
@@ -882,7 +809,7 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             ret, login_pwd = test_field(t_field=login_pwd, \
-                    t_label='    Password  ', t_type=None, t_len_min=3, t_len_max=50, t_pass='Y')  
+                    t_label=' 2) Password  ', t_type=None, t_len_min=3, t_len_max=50, t_pass='Y')  
 
             if ret == False:
                 time.sleep(2)
@@ -891,10 +818,11 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             cpt = 0
+            continue
         else:
-            if flag_validation == True:
-                print()
-                print(' ' * 6 + '    Password   : *****')
+            if flag_field_modification == False:
+               #print('\n' + ' ' * 6 + '    Password   : *****')
+                print('\n' + ' ' * 6 + ' 2) Password   : *****')
 
         if login_pwd_verif == '':
             print()
@@ -939,7 +867,7 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             ret, first_name = test_field(t_field=first_name, \
-                    t_label='    First Name', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
+                    t_label=' 3) First Name', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
 
             if ret == False:
                 time.sleep(2)
@@ -948,10 +876,11 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             cpt = 0
+            continue
         else:
-            if flag_validation == True:
-                print()
-                print(' ' * 6 + '    First Name : %s' % (first_name))
+            if flag_field_modification == False:
+               #print('\n' + ' ' * 6 + '    First Name : %s' % (first_name))
+                print('\n' + ' ' * 6 + ' 3) First Name : %s' % (first_name))
 
         if last_name == '':
             print()
@@ -960,7 +889,7 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             ret, last_name = test_field(t_field=last_name, \
-                    t_label='    Last Name ', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
+                    t_label=' 4) Last Name ', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
 
             if ret == False:
                 time.sleep(2)
@@ -969,10 +898,11 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             cpt = 0
+            continue
         else:
-            if flag_validation == True:
-                print()
-                print(' ' * 6 + '    Last Name  : %s' % (last_name))
+            if flag_field_modification == False:
+               #print('\n' + ' ' * 6 + '    Last Name  : %s' % (last_name))
+                print('\n' + ' ' * 6 + ' 4) Last Name  : %s' % (last_name))
 
         if email == '':
             print()
@@ -981,7 +911,7 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             ret, email = test_field(t_field=email, \
-                    t_label='    E-mail    ', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
+                    t_label=' 5) E-mail    ', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
 
             if ret == False:
                 time.sleep(2)
@@ -989,30 +919,27 @@ def i_want_to_register_to_the_application(job):
                 cpt += 1
                 continue
 
-            cpt = 0
-
             pos = email.find('@')
             if pos == -1:
-                print(' ' * 10 + 'Email invalid! Must have the "@" character')
+                print(' ' * 10 + 'E-mail invalid! Must have the "@" character')
                 time.sleep(2)
                 email = ''
                 cpt += 1
                 continue
-
-            cpt = 0
 
             if email[pos:].find('.') == -1:
-                print(' ' * 10 + 'Email invalid! Must have the "." character after the character "@"')
+                print(' ' * 10 + 'E-mail invalid! Must have the "." character after the character "@"')
                 time.sleep(2)
                 email = ''
                 cpt += 1
                 continue
 
             cpt = 0
+            continue
         else:
-            if flag_validation == True:
-                print()
-                print(' ' * 6 + '    Email      : %s' % (email))
+            if flag_field_modification == False:
+               #print('\n' + ' ' * 6 + '    E-mail     : %s' % (email))
+                print('\n' + ' ' * 6 + ' 5) E-mail     : %s' % (email))
 
         if birthdate == '':
             print()
@@ -1021,15 +948,13 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             ret, birthdate = test_field(t_field=birthdate, \
-                    t_label='    Birthdate (format YYYY-MM-DD)', t_type=None, t_len_min=10, t_len_max=10, t_pass='N')  
+                    t_label=' 6) Birthdate (format YYYY-MM-DD)', t_type=None, t_len_min=10, t_len_max=10, t_pass='N')  
 
             if ret == False:
                 time.sleep(2)
                 birthdate = ''
                 cpt += 1
                 continue
-
-            cpt = 0
 
             try:
                 validate(birthdate, date_format='%Y-%m-%d', date_display='YYYY-MM-DD')
@@ -1039,8 +964,6 @@ def i_want_to_register_to_the_application(job):
                 birthdate = ''
                 cpt += 1
                 continue
-
-            cpt = 0
 
             year, month, day = birthdate.split('-')
 
@@ -1052,10 +975,11 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             cpt = 0
+            continue
         else:
-            if flag_validation == True:
-                print()
-                print(' ' * 6 + '    Birthdate  : %s' % (birthdate))
+            if flag_field_modification == False:
+                #print('\n' + ' ' * 6 + '    Birthdate  : %s' % (birthdate))
+                print('\n' + ' ' * 6 + ' 6) Birthdate  : %s' % (birthdate))
 
         if country == '':
             print()
@@ -1064,7 +988,7 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             ret, country = test_field(t_field=country, \
-                    t_label='    Country   ', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
+                    t_label=' 7) Country   ', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
 
             if ret == False:
                 time.sleep(2)
@@ -1073,10 +997,11 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             cpt = 0
+            continue
         else:
-            if flag_validation == True:
-                print()
-                print(' ' * 6 + '    Country    : %s' % (country))
+            if flag_field_modification == False:
+                #print('\n' + ' ' * 6 + '    Country    : %s' % (country))
+                print('\n' + ' ' * 6 + ' 7) Country    : %s' % (country))
 
         if town == '':
             print()
@@ -1085,7 +1010,7 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             ret, town = test_field(t_field=town, \
-                    t_label='    Town      ', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
+                    t_label=' 8) Town      ', t_type=None, t_len_min=3, t_len_max=30, t_pass='N')  
 
             if ret == False:
                 time.sleep(2)
@@ -1094,10 +1019,11 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             cpt = 0
+            continue
         else:
-            if flag_validation == True:
-                print()
-                print(' ' * 6 + '    Town       : %s' % (town))
+            if flag_field_modification == False:
+                #print('\n' + ' ' * 6 + '    Town       : %s' % (town))
+                print('\n' + ' ' * 6 + ' 8) Town       : %s' % (town))
 
         if gender == '':
             print()
@@ -1106,7 +1032,7 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             ret, gender = test_field(t_field=gender, \
-                    t_label='    Gender    ', t_type='alpha', t_len_min=1, t_len_max=1, t_pass='N')  
+                    t_label=' 9) Gender    ', t_type='alpha', t_len_min=1, t_len_max=1, t_pass='N')  
 
             if ret == False:
                 time.sleep(2)
@@ -1123,22 +1049,24 @@ def i_want_to_register_to_the_application(job):
                 continue
 
             cpt = 0
+            continue
         else:
-            if flag_validation == True:
-                print()
-                print(' ' * 6 + '    Gender     : %s' % (gender))
+            if flag_field_modification == False:
+                #print('\n' + ' ' * 6 + '    Gender     : %s' % (gender))
+                print('\n' + ' ' * 6 + ' 9) Gender     : %s' % (gender))
 
-        if flag_validation == False:
-            flag_validation = True
+        if flag_field_modification == True:
+            flag_field_modification = False
             continue
 
         if flag_validation == True:
-            flag_validation = False
+            flag_field_modification = True
             rep = ''
             print('\n')
             print(' ' * 5 + 'Y      ==> Validation of entered data')
             print(' ' * 5 + 'N      ==> Cancel entries and return to the previous screen!')
             print(' ' * 5 + '1 .. 9 ==> Field update')
+            '''
             print(' ' * 5 + '1) Login Name')
             print(' ' * 5 + '2) Password  ')
             print(' ' * 5 + '3) First Name')
@@ -1148,6 +1076,7 @@ def i_want_to_register_to_the_application(job):
             print(' ' * 5 + '7) Country   ')
             print(' ' * 5 + '8) Town      ')
             print(' ' * 5 + '9) Gender    ')
+            '''
             print('\n')
 
             rep = input(' ' * 5 + 'Choice ==> ').capitalize()
@@ -1169,6 +1098,7 @@ def i_want_to_register_to_the_application(job):
             elif rep == '2':
                 old_login_pwd = login_pwd
                 login_pwd = ''
+                login_pwd_verif = ''
                 cpt = 0
                 continue
             elif rep == '3':
@@ -1207,7 +1137,7 @@ def i_want_to_register_to_the_application(job):
                 cpt = 0
                 continue
             else:
-                flag_validation = True
+                flag_field_modification = False
                 cpt = 0
                 continue
 
@@ -1275,6 +1205,90 @@ def i_want_to_register_to_the_application(job):
         ret = True
 
     # end while
+
+    return ret
+
+def menu_main(job):
+
+    rep = ''
+
+    while rep not in ['Q', 'R', '1', '2', '3']:
+        menu_header(job)
+        print(' ' * 5 + '1 ==> My ranking for a game')
+        print(' ' * 5 + '2 ==> Top 5 rankings of all games')
+        print(' ' * 5 + '3 ==> Provide the score of my game')
+        print(' ' * 5 + 'R ==> RETURN')
+        print(' ' * 5 + 'Q ==> QUIT')
+        print('\n')
+
+        rep = input(' ' * 5 + 'Choice ==> ').capitalize()
+
+        if rep == '1':
+            rep = display_my_ranking_for_a_game(job)
+        elif rep == '2':
+            rep = display_top_5_ranking_of_all_games(job)
+        elif rep == '3':
+            rep = display_Provide_my_score_of_my_game(job)
+
+    return rep
+
+def menu_login(job):
+
+    flag_redisplay = True
+    cpt = 0
+    ret = False
+    job.login_name = ''
+    login_pwd  = ''
+    job.login_type = ''
+
+    #while flag_redisplay and cpt < 3:
+    while flag_redisplay:
+        menu_header(job)
+
+        if job.login_name == '':
+            if cpt == 3:
+                ret, cpt, flag_redisplay = cancel_entry()
+                continue
+            name = input(' ' * 5 + ' Login Name : ')
+
+            sql = "SELECT login_id, login_name, login_pwd, login_type FROM login WHERE login_name = '%s'" % (name)
+            data = job.SQL_fetch_one(sql)
+            if data == None:
+                print(' ' * 6 + 'Login Name invalid!')
+                time.sleep(1)
+                cpt += 1
+                continue
+            
+            cpt = 0
+            job.login_id = data[0]
+            job.login_name = data[1]
+            login_pwd  = data[2]
+            job.login_type = data[3]
+
+            '''
+            print("login_id : %d " % job.login_id)
+            print("login_name : %s " % job.login_name)
+            print("login_pwd : %s " % login_pwd)
+            print("login_type : %s " % job.login_type)
+            '''
+        else:
+            print(' ' * 5 + ' Login Name : %s' % (job.login_name))
+
+        if cpt == 3:
+            ret, cpt, flag_redisplay = cancel_entry()
+            continue
+
+        #pwd = input(' ' * 5 + ' password : ')
+        pwd = getpass.getpass(prompt='      Password   : ')
+
+        if pwd != login_pwd:
+            print(' ' * 6 + 'Password invalid!')
+            time.sleep(1)
+            cpt += 1
+            continue
+        else:
+            flag_redisplay = False
+            ret = True
 
     return ret
 
